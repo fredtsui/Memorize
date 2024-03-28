@@ -8,54 +8,77 @@
 import SwiftUI
 import SwiftData
 
-struct ContentView: View {
-    @Environment(\.modelContext) private var modelContext
-    @Query private var items: [Item]
-
+struct CardView: View {
+    @State var isFaceUp: Bool = true
+    var content: String = "🚗"
+    
     var body: some View {
-        NavigationSplitView {
-            List {
-                ForEach(items) { item in
-                    NavigationLink {
-                        Text("Item at \(item.timestamp, format: Date.FormatStyle(date: .numeric, time: .standard))")
-                    } label: {
-                        Text(item.timestamp, format: Date.FormatStyle(date: .numeric, time: .standard))
-                    }
-                }
-                .onDelete(perform: deleteItems)
+        ZStack {
+            let shape = RoundedRectangle(cornerRadius: 20)
+            if isFaceUp {
+                shape .fill() .foregroundColor(.white)
+                shape .strokeBorder(lineWidth: 3)
+                Text(content)
+                    .font(.largeTitle)
+            } else {
+                shape .fill()
             }
-            .toolbar {
-                ToolbarItem(placement: .navigationBarTrailing) {
-                    EditButton()
-                }
-                ToolbarItem {
-                    Button(action: addItem) {
-                        Label("Add Item", systemImage: "plus")
-                    }
-                }
-            }
-        } detail: {
-            Text("Select an item")
         }
-    }
-
-    private func addItem() {
-        withAnimation {
-            let newItem = Item(timestamp: Date())
-            modelContext.insert(newItem)
-        }
-    }
-
-    private func deleteItems(offsets: IndexSet) {
-        withAnimation {
-            for index in offsets {
-                modelContext.delete(items[index])
-            }
+        .onTapGesture {
+            isFaceUp.toggle()
         }
     }
 }
 
-#Preview {
-    ContentView()
-        .modelContainer(for: Item.self, inMemory: true)
+
+
+struct ContentView: View {
+    var emojis = ["🚗", "🚀", "🚎", "⛴️","✈️","🛶","🛰️","🚆","🚓","🛴","🚲","🛵","🛺","🚄"]
+    @State var emojiCount = 10
+    var body: some View {
+        VStack{
+            ScrollView{
+                LazyVGrid(columns: [GridItem(.adaptive(minimum: 65))]){
+                    ForEach(emojis[0..<emojiCount], id: \.self) { emoji in
+                        CardView(content: emoji).aspectRatio(2/3, contentMode: .fit)
+                    }
+                    
+                }
+            }
+            .foregroundColor(.red)
+            Spacer()
+            HStack{
+                remove
+                Spacer()
+                Text("\(emojiCount)")
+                Spacer()
+                add
+                
+            }
+            .padding()
+            .font(.largeTitle)
+        }
+        .padding()
+        
+    }
+    var remove: some View {
+        Button(action: {if emojiCount > 1 {emojiCount -= 1}}, label: {
+            Image(systemName: "minus.circle")
+        })
+    }
+
+    var add: some View {
+        Button(action: {if emojiCount < emojis.count {emojiCount += 1}}, label: {Image(systemName: "plus.circle")})
+    }
+}
+
+
+struct ContentView_Preview: PreviewProvider {
+    static var previews: some View{
+        ContentView()
+            .preferredColorScheme(.dark)
+        ContentView()
+            .preferredColorScheme(.light)
+        
+    }
 }
